@@ -38,40 +38,34 @@ jobs:
 
       - name: Get current version
         id: get_version
-        shell: pwsh
+        shell: bash
         run: |
           # Get the latest tag, default to v0.0.0 if none exists
-          $latestTag = git describe --tags --abbrev=0 2>$null
-          if (-not $latestTag) {
-            $latestTag = "v0.0.0"
-          }
+          latestTag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           
           # Parse version
-          $version = $latestTag -replace '^v', ''
-          $parts = $version -split '\.'
-          $major = [int]$parts[0]
-          $minor = [int]$parts[1]
-          $patch = [int]$parts[2]
+          version=${latestTag#v}
+          IFS='.' read -r major minor patch <<< "$version"
           
           # Determine bump type
-          $bumpType = "${{ github.event.inputs.version_bump }}"
-          if (-not $bumpType) {
-            $bumpType = "patch"
-          }
+          bumpType="${{ github.event.inputs.version_bump }}"
+          if [ -z "$bumpType" ]; then
+            bumpType="patch"
+          fi
           
           # Bump version
-          switch ($bumpType) {
-            "major" { $major++; $minor = 0; $patch = 0 }
-            "minor" { $minor++; $patch = 0 }
-            "patch" { $patch++ }
-          }
+          case $bumpType in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+          esac
           
-          $newVersion = "$major.$minor.$patch"
-          $newTag = "v$newVersion"
+          newVersion="$major.$minor.$patch"
+          newTag="v$newVersion"
           
-          Write-Host "Previous: $latestTag -> New: $newTag"
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "version=$newVersion"
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "tag=$newTag"
+          echo "Previous: $latestTag -> New: $newTag"
+          echo "version=$newVersion" >> $GITHUB_OUTPUT
+          echo "tag=$newTag" >> $GITHUB_OUTPUT
 
       - name: Update version in project
         shell: pwsh
