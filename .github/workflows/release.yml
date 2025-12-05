@@ -70,8 +70,8 @@ jobs:
           $newTag = "v$newVersion"
           
           Write-Host "Previous: $latestTag -> New: $newTag"
-          "version=$newVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "tag=$newTag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "version=$newVersion"
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "tag=$newTag"
 
       - name: Update version in project
         shell: pwsh
