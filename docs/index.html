@@ -34,58 +34,31 @@
 
         /* Hero Section */
         .hero {
-            min-height: auto;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 4rem 2rem 3rem;
+            padding: 3rem 2rem 4rem;
             text-align: center;
-            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1a2e 100%);
+            background: linear-gradient(180deg, var(--bg-primary) 0%, #1a1a2e 50%, var(--bg-primary) 100%);
         }
 
-        /* Hero Screenshots */
-        .hero-screenshots {
+        .hero-header {
             display: flex;
-            gap: 2rem;
-            margin-top: 3rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            max-width: 1100px;
-        }
-
-        .hero-screenshot {
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 120, 212, 0.15);
-            border: 1px solid var(--border);
-            overflow: hidden;
-            transition: transform 0.3s ease;
-        }
-
-        .hero-screenshot:hover {
-            transform: translateY(-5px);
-        }
-
-        .hero-screenshot img {
-            display: block;
-            height: auto;
-        }
-
-        .hero-screenshot.app-screenshot img {
-            width: 500px;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         .hero-icon {
-            width: 120px;
-            height: 120px;
-            margin-bottom: 2rem;
-            filter: drop-shadow(0 0 30px rgba(0, 120, 212, 0.3));
+            width: 72px;
+            height: 72px;
+            filter: drop-shadow(0 0 20px rgba(0, 120, 212, 0.3));
         }
 
         .hero h1 {
-            font-size: 3.5rem;
+            font-size: 3rem;
             font-weight: 700;
-            margin-bottom: 1rem;
             background: linear-gradient(135deg, #fff 0%, #0078d4 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -93,10 +66,19 @@
         }
 
         .hero .tagline {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            max-width: 550px;
+        }
+
+        .hero-cta {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
             margin-bottom: 2rem;
-            max-width: 600px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .download-btn {
@@ -105,10 +87,10 @@
             gap: 0.75rem;
             background: var(--accent);
             color: white;
-            padding: 1rem 2rem;
+            padding: 0.875rem 1.75rem;
             border-radius: 8px;
             text-decoration: none;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
             transition: all 0.2s ease;
             box-shadow: 0 4px 20px rgba(0, 120, 212, 0.4);
@@ -121,14 +103,13 @@
         }
 
         .download-btn svg {
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
         }
 
         .version-info {
-            margin-top: 1rem;
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .version-info a {
@@ -138,6 +119,34 @@
 
         .version-info a:hover {
             text-decoration: underline;
+        }
+
+        /* Hero Screenshot - Large and Prominent */
+        .hero-screenshot {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 1000px;
+            margin-top: 1rem;
+        }
+
+        .hero-screenshot img {
+            width: 100%;
+            max-width: 900px;
+            height: auto;
+            border-radius: 16px;
+            box-shadow: 
+                0 25px 80px rgba(0, 0, 0, 0.6), 
+                0 0 60px rgba(0, 120, 212, 0.2),
+                0 0 1px rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border);
+            transition: transform 0.3s ease;
+        }
+
+        .hero-screenshot img:hover {
+            transform: scale(1.02);
         }
 
         /* Common */
@@ -265,22 +274,31 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+            .hero {
+                min-height: auto;
+                padding: 2rem 1rem 3rem;
+            }
+
+            .hero-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .hero-icon {
+                width: 56px;
+                height: 56px;
+            }
+
             .hero h1 {
-                font-size: 2.5rem;
+                font-size: 2rem;
             }
 
             .hero .tagline {
-                font-size: 1.2rem;
+                font-size: 1rem;
             }
 
-            .hero-screenshots {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .hero-screenshot.app-screenshot img {
-                width: 100%;
-                max-width: 500px;
+            .hero-screenshot img {
+                border-radius: 12px;
             }
 
             .section-title {
@@ -292,28 +310,29 @@
 <body>
     <!-- Hero Section -->
     <section class="hero">
-        <img src="icon.png" alt="Image Converter" class="hero-icon">
-        <h1>Image Converter</h1>
+        <div class="hero-header">
+            <img src="icon.png" alt="Image Converter" class="hero-icon">
+            <h1>Image Converter</h1>
+        </div>
         <p class="tagline">Right-click any image in Windows to instantly convert between formats. Fast, simple, beautiful.</p>
         
-        <a href="https://github.com/burkeholland/ImageConverter/releases/latest" class="download-btn" id="downloadBtn">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7,10 12,15 17,10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            Download for Windows
-        </a>
-        
-        <p class="version-info">
-            <span id="latestVersion">Latest release</span> · 
-            <a href="https://github.com/burkeholland/ImageConverter/releases">View all releases</a>
-        </p>
+        <div class="hero-cta">
+            <a href="https://github.com/burkeholland/ImageConverter/releases/latest" class="download-btn" id="downloadBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7,10 12,15 17,10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Download for Windows
+            </a>
+            <p class="version-info">
+                <span id="latestVersion">Latest release</span> · 
+                <a href="https://github.com/burkeholland/ImageConverter/releases">All releases</a>
+            </p>
+        </div>
 
-        <div class="hero-screenshots">
-            <div class="hero-screenshot app-screenshot">
-                <img src="screenshots/main-window.png" alt="Image Converter application">
-            </div>
+        <div class="hero-screenshot">
+            <img src="screenshots/main-window.png" alt="Image Converter application">
         </div>
     </section>
 
