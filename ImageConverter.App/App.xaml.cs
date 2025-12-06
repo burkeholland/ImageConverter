@@ -40,19 +40,19 @@ public partial class App : Application
             {
                 // Show quick convert window for context menu invocation
                 var quickWindow = new QuickConvertWindow(e.Args[0]);
-                var result = quickWindow.ShowDialog();
+                quickWindow.ShowDialog();
 
                 if (quickWindow.OpenMainWindow)
                 {
                     // User wants more options, open main window with file loaded
                     var mainWindow = new MainWindow();
                     mainWindow.LoadFile(e.Args[0]);
+                    MainWindow = mainWindow;
                     mainWindow.Show();
+                    return;
                 }
-                else
-                {
-                    Shutdown();
-                }
+                
+                Shutdown();
                 return;
             }
         }
