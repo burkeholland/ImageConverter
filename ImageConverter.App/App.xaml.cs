@@ -12,14 +12,16 @@ namespace ImageConverter;
 /// </summary>
 public partial class App : Application
 {
-    private readonly ImageConversionService _conversionService = new();
+    // Lazy-load conversion service to avoid startup cost when not needed
+    private ImageConversionService? _conversionService;
+    private ImageConversionService ConversionService => _conversionService ??= new ImageConversionService();
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
-        // Apply system theme and accent color
-        ApplicationThemeManager.ApplySystemTheme();
+        // Apply system theme on background thread to avoid blocking startup
+        Task.Run(() => ApplicationThemeManager.ApplySystemTheme());
 
         // Handle command line arguments
         if (e.Args.Length > 0)
@@ -94,7 +96,7 @@ public partial class App : Application
                 Quality = format == ImageFormat.Jpeg || format == ImageFormat.WebP ? 85 : 100
             };
 
-            var result = await _conversionService.ConvertAsync(filePath, options);
+            var result = await ConversionService.ConvertAsync(filePath, options);
 
             if (!result.Success)
             {
