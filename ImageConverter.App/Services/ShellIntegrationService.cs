@@ -1,21 +1,33 @@
 using Microsoft.Win32;
 using System.Diagnostics;
-using System.IO;
 using System.Security.Principal;
 
 namespace ImageConverter.Services;
 
 /// <summary>
 /// Service for managing Windows shell context menu registration.
+/// Creates a cascading submenu with format options.
 /// </summary>
 public class ShellIntegrationService
 {
-    private const string MenuName = "Convert Image...";
+    private const string MenuName = "Convert Image";
     private const string RegistryKeyName = "ImageConverter";
     
     private static readonly string[] ImageExtensions =
     [
         ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".tif", ".ico"
+    ];
+
+    // Format options for the submenu
+    private static readonly (string Name, string Arg)[] FormatOptions =
+    [
+        ("JPEG", "jpeg"),
+        ("PNG", "png"),
+        ("WebP", "webp"),
+        ("GIF", "gif"),
+        ("BMP", "bmp"),
+        ("TIFF", "tiff"),
+        ("ICO", "ico"),
     ];
 
     /// <summary>
@@ -45,7 +57,7 @@ public class ShellIntegrationService
     }
 
     /// <summary>
-    /// Register the application in the Windows shell context menu.
+    /// Register the application in the Windows shell context menu with cascading submenu.
     /// Requires administrator privileges.
     /// </summary>
     public static void Register(string executablePath)
@@ -60,7 +72,6 @@ public class ShellIntegrationService
             RegisterForExtension(ext, executablePath);
         }
 
-        // Also register for all image types via SystemFileAssociations
         RegisterForSystemFileAssociation("image", executablePath);
     }
 
@@ -84,7 +95,7 @@ public class ShellIntegrationService
     }
 
     /// <summary>
-    /// Register context menu for a specific file extension.
+    /// Register cascading context menu for a specific file extension.
     /// </summary>
     private static void RegisterForExtension(string extension, string executablePath)
     {
@@ -97,12 +108,36 @@ public class ShellIntegrationService
 
             shellKey.SetValue("", MenuName);
             shellKey.SetValue("Icon", $"\"{executablePath}\",0");
-            
-            // Position at the top of the context menu
             shellKey.SetValue("Position", "Top");
+            shellKey.SetValue("MUIVerb", MenuName);
+            shellKey.SetValue("SubCommands", "");
 
-            using var commandKey = shellKey.CreateSubKey("command");
-            commandKey?.SetValue("", $"\"{executablePath}\" \"%1\"");
+            using var subShellKey = shellKey.CreateSubKey("shell");
+            if (subShellKey == null) return;
+
+            int order = 1;
+            foreach (var (name, arg) in FormatOptions)
+            {
+                using var formatKey = subShellKey.CreateSubKey($"{order:D2}_{arg}");
+                if (formatKey == null) continue;
+
+                formatKey.SetValue("MUIVerb", $"Convert to {name}");
+
+                using var commandKey = formatKey.CreateSubKey("command");
+                commandKey?.SetValue("", $"\"{executablePath}\" --convert \"{arg}\" \"%1\"");
+                
+                order++;
+            }
+
+            // Add "Custom..." option at the end
+            using var customKey = subShellKey.CreateSubKey($"{order:D2}_custom");
+            if (customKey != null)
+            {
+                customKey.SetValue("MUIVerb", "Custom...");
+
+                using var commandKey = customKey.CreateSubKey("command");
+                commandKey?.SetValue("", $"\"{executablePath}\" --custom \"%1\"");
+            }
         }
         catch (Exception ex)
         {
@@ -125,9 +160,34 @@ public class ShellIntegrationService
             shellKey.SetValue("", MenuName);
             shellKey.SetValue("Icon", $"\"{executablePath}\",0");
             shellKey.SetValue("Position", "Top");
+            shellKey.SetValue("MUIVerb", MenuName);
+            shellKey.SetValue("SubCommands", "");
 
-            using var commandKey = shellKey.CreateSubKey("command");
-            commandKey?.SetValue("", $"\"{executablePath}\" \"%1\"");
+            using var subShellKey = shellKey.CreateSubKey("shell");
+            if (subShellKey == null) return;
+
+            int order = 1;
+            foreach (var (name, arg) in FormatOptions)
+            {
+                using var formatKey = subShellKey.CreateSubKey($"{order:D2}_{arg}");
+                if (formatKey == null) continue;
+
+                formatKey.SetValue("MUIVerb", $"Convert to {name}");
+
+                using var commandKey = formatKey.CreateSubKey("command");
+                commandKey?.SetValue("", $"\"{executablePath}\" --convert \"{arg}\" \"%1\"");
+                
+                order++;
+            }
+
+            using var customKey = subShellKey.CreateSubKey($"{order:D2}_custom");
+            if (customKey != null)
+            {
+                customKey.SetValue("MUIVerb", "Custom...");
+
+                using var commandKey = customKey.CreateSubKey("command");
+                commandKey?.SetValue("", $"\"{executablePath}\" --custom \"%1\"");
+            }
         }
         catch (Exception ex)
         {

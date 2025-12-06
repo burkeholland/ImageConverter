@@ -1,8 +1,9 @@
 ﻿using System.IO;
 using System.Windows;
+using ImageConverter.Models;
 using ImageConverter.Services;
-using ImageConverter.Views;
 using Wpf.Ui.Appearance;
+using ImageFormat = ImageConverter.Models.ImageFormat;
 
 namespace ImageConverter;
 
@@ -11,6 +12,8 @@ namespace ImageConverter;
 /// </summary>
 public partial class App : Application
 {
+    private readonly ImageConversionService _conversionService = new();
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -18,48 +21,112 @@ public partial class App : Application
         // Apply system theme and accent color
         ApplicationThemeManager.ApplySystemTheme();
 
-        // Handle command line arguments for shell integration
+        // Handle command line arguments
         if (e.Args.Length > 0)
         {
             var arg = e.Args[0].ToLowerInvariant();
 
+            // --register: Register shell integration
             if (arg == "--register")
             {
                 HandleRegistration();
                 return;
             }
 
+            // --unregister: Remove shell integration
             if (arg == "--unregister")
             {
                 HandleUnregistration();
                 return;
             }
 
-            // Check if it's a file path for quick conversion
+            // --convert <format> <filepath>: Direct conversion from context menu
+            if (arg == "--convert" && e.Args.Length >= 3)
+            {
+                HandleDirectConversion(e.Args[1], e.Args[2]);
+                return;
+            }
+
+            // --custom <filepath>: Open main window with file loaded
+            if (arg == "--custom" && e.Args.Length >= 2)
+            {
+                OpenMainWindowWithFile(e.Args[1]);
+                return;
+            }
+
+            // Legacy: Just a file path (for backward compatibility)
             if (File.Exists(e.Args[0]) && ImageConversionService.IsSupportedFormat(e.Args[0]))
             {
-                // Show quick convert window for context menu invocation
-                var quickWindow = new QuickConvertWindow(e.Args[0]);
-                quickWindow.ShowDialog();
-
-                if (quickWindow.OpenMainWindow)
-                {
-                    // User wants more options, open main window with file loaded
-                    var mainWindow = new MainWindow();
-                    mainWindow.LoadFile(e.Args[0]);
-                    MainWindow = mainWindow;
-                    mainWindow.Show();
-                    return;
-                }
-                
-                Shutdown();
+                OpenMainWindowWithFile(e.Args[0]);
                 return;
             }
         }
 
         // Normal startup with main window
-        var mainWindow2 = new MainWindow();
-        mainWindow2.Show();
+        var mainWindow = new MainWindow();
+        mainWindow.Show();
+    }
+
+    /// <summary>
+    /// Handle direct format conversion from context menu.
+    /// </summary>
+    private async void HandleDirectConversion(string formatArg, string filePath)
+    {
+        if (!File.Exists(filePath))
+        {
+            MessageBox.Show($"File not found: {filePath}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown();
+            return;
+        }
+
+        if (!Enum.TryParse<ImageFormat>(formatArg, true, out var format))
+        {
+            MessageBox.Show($"Unknown format: {formatArg}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown();
+            return;
+        }
+
+        try
+        {
+            var options = new ConversionOptions
+            {
+                TargetFormat = format,
+                Quality = format == ImageFormat.Jpeg || format == ImageFormat.WebP ? 85 : 100
+            };
+
+            var result = await _conversionService.ConvertAsync(filePath, options);
+
+            if (result.Success && !string.IsNullOrEmpty(result.OutputPath))
+            {
+                // Open folder with file selected
+                System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{result.OutputPath}\"");
+            }
+            else
+            {
+                MessageBox.Show(
+                    result.ErrorMessage ?? "Conversion failed",
+                    "Conversion Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error: {ex.Message}", "Conversion Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        Shutdown();
+    }
+
+    /// <summary>
+    /// Open the main window with a file pre-loaded.
+    /// </summary>
+    private void OpenMainWindowWithFile(string filePath)
+    {
+        var mainWindow = new MainWindow();
+        mainWindow.LoadFile(filePath);
+        MainWindow = mainWindow;
+        mainWindow.Show();
     }
 
     private void HandleRegistration()
