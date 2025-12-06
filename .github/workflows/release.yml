@@ -127,10 +127,18 @@ jobs:
           Write-Host "Created ImageConverter-${{ steps.get_version.outputs.tag }}.zip"
 
       - name: Create Git tag
-        shell: pwsh
+        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Check if tag already exists
+          if git rev-parse "${{ steps.get_version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "Tag ${{ steps.get_version.outputs.tag }} already exists, deleting and recreating..."
+            git tag -d ${{ steps.get_version.outputs.tag }}
+            git push origin :refs/tags/${{ steps.get_version.outputs.tag }} || true
+          fi
+          
           git tag ${{ steps.get_version.outputs.tag }}
           git push origin ${{ steps.get_version.outputs.tag }}
 
