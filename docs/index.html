@@ -34,14 +34,49 @@
 
         /* Hero Section */
         .hero {
-            min-height: 100vh;
+            min-height: auto;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 2rem;
+            padding: 4rem 2rem 3rem;
             text-align: center;
             background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1a2e 100%);
+        }
+
+        /* Hero Screenshots */
+        .hero-screenshots {
+            display: flex;
+            gap: 2rem;
+            margin-top: 3rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            max-width: 1100px;
+        }
+
+        .hero-screenshot {
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 120, 212, 0.15);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .hero-screenshot:hover {
+            transform: translateY(-5px);
+        }
+
+        .hero-screenshot img {
+            display: block;
+            height: auto;
+        }
+
+        .hero-screenshot.app-screenshot img {
+            width: 320px;
+        }
+
+        .hero-screenshot.menu-screenshot img {
+            width: 500px;
         }
 
         .hero-icon {
@@ -109,12 +144,7 @@
             text-decoration: underline;
         }
 
-        /* Screenshots Section */
-        .screenshots {
-            padding: 6rem 2rem;
-            background: var(--bg-secondary);
-        }
-
+        /* Common */
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -124,56 +154,6 @@
             text-align: center;
             font-size: 2.5rem;
             margin-bottom: 3rem;
-        }
-
-        .screenshot-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
-        }
-
-        .screenshot-card {
-            background: var(--bg-tertiary);
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .screenshot-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .screenshot-card img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .screenshot-placeholder {
-            width: 100%;
-            height: 300px;
-            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-tertiary) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-secondary);
-            font-size: 1rem;
-        }
-
-        .screenshot-card .caption {
-            padding: 1.5rem;
-        }
-
-        .screenshot-card .caption h3 {
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .screenshot-card .caption p {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
         }
 
         /* Features Section */
@@ -297,12 +277,19 @@
                 font-size: 1.2rem;
             }
 
-            .section-title {
-                font-size: 2rem;
+            .hero-screenshots {
+                flex-direction: column;
+                align-items: center;
             }
 
-            .screenshot-grid {
-                grid-template-columns: 1fr;
+            .hero-screenshot.app-screenshot img,
+            .hero-screenshot.menu-screenshot img {
+                width: 100%;
+                max-width: 400px;
+            }
+
+            .section-title {
+                font-size: 2rem;
             }
         }
     </style>
@@ -327,48 +314,13 @@
             <span id="latestVersion">Latest release</span> · 
             <a href="https://github.com/burkeholland/ImageConverter/releases">View all releases</a>
         </p>
-    </section>
 
-    <!-- Screenshots Section -->
-    <section class="screenshots">
-        <div class="container">
-            <h2 class="section-title">See It in Action</h2>
-            <div class="screenshot-grid">
-                <div class="screenshot-card">
-                    <!-- Replace with actual screenshot -->
-                    <div class="screenshot-placeholder">
-                        <span>Screenshot: Context Menu</span>
-                    </div>
-                    <!-- <img src="screenshots/context-menu.png" alt="Right-click context menu"> -->
-                    <div class="caption">
-                        <h3>Right-Click to Convert</h3>
-                        <p>Access image conversion directly from Windows Explorer's context menu.</p>
-                    </div>
-                </div>
-                
-                <div class="screenshot-card">
-                    <!-- Replace with actual screenshot -->
-                    <div class="screenshot-placeholder">
-                        <span>Screenshot: Quick Convert</span>
-                    </div>
-                    <!-- <img src="screenshots/quick-convert.png" alt="Quick convert window"> -->
-                    <div class="caption">
-                        <h3>One-Click Conversion</h3>
-                        <p>Choose your target format and convert instantly with a single click.</p>
-                    </div>
-                </div>
-                
-                <div class="screenshot-card">
-                    <!-- Replace with actual screenshot -->
-                    <div class="screenshot-placeholder">
-                        <span>Screenshot: Main App</span>
-                    </div>
-                    <!-- <img src="screenshots/main-app.png" alt="Main application window"> -->
-                    <div class="caption">
-                        <h3>Advanced Options</h3>
-                        <p>Fine-tune quality, resize images, and preview before converting.</p>
-                    </div>
-                </div>
+        <div class="hero-screenshots">
+            <div class="hero-screenshot app-screenshot">
+                <img src="screenshots/main-app.png" alt="Image Converter main window">
+            </div>
+            <div class="hero-screenshot menu-screenshot">
+                <img src="screenshots/context-menu.png" alt="Right-click context menu integration">
             </div>
         </div>
     </section>
