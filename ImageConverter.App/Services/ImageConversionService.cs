@@ -9,6 +9,8 @@ using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Formats.Tiff;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
+using SkiaSharp;
+using Svg.Skia;
 using ImageFormat = ImageConverter.Models.ImageFormat;
 using ImageInfo = ImageConverter.Models.ImageInfo;
 using ResizeMode = ImageConverter.Models.ResizeMode;
@@ -25,7 +27,7 @@ public class ImageConversionService
 {
     private static readonly string[] SupportedExtensions =
     [
-        ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".tif", ".ico"
+        ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".tif", ".ico", ".svg"
     ];
 
     /// <summary>
@@ -38,11 +40,26 @@ public class ImageConversionService
     }
 
     /// <summary>
+    /// Check if a file is an SVG file.
+    /// </summary>
+    public static bool IsSvgFile(string filePath)
+    {
+        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+        return extension == ".svg";
+    }
+
+    /// <summary>
     /// Get information about an image file.
     /// </summary>
     public async Task<ImageInfo> GetImageInfoAsync(string filePath)
     {
         var fileInfo = new FileInfo(filePath);
+
+        // Handle SVG files specially
+        if (IsSvgFile(filePath))
+        {
+            return await GetSvgImageInfoAsync(filePath, fileInfo);
+        }
 
         using var image = await Image.LoadAsync(filePath);
 
@@ -69,6 +86,34 @@ public class ImageConversionService
     }
 
     /// <summary>
+    /// Get information about an SVG file.
+    /// </summary>
+    private async Task<ImageInfo> GetSvgImageInfoAsync(string filePath, FileInfo fileInfo)
+    {
+        return await Task.Run(() =>
+        {
+            using var svg = new SKSvg();
+            svg.Load(filePath);
+            
+            var picture = svg.Picture;
+            var bounds = picture?.CullRect ?? SKRect.Empty;
+
+            return new ImageInfo
+            {
+                FilePath = filePath,
+                FileName = fileInfo.Name,
+                Extension = fileInfo.Extension.ToLowerInvariant(),
+                Directory = fileInfo.DirectoryName ?? "",
+                FileSizeBytes = fileInfo.Length,
+                Width = (int)bounds.Width,
+                Height = (int)bounds.Height,
+                DetectedFormat = "SVG",
+                HasTransparency = true  // SVG typically supports transparency
+            };
+        });
+    }
+
+    /// <summary>
     /// Convert an image with the specified options.
     /// </summary>
     public async Task<ConversionResult> ConvertAsync(string sourcePath, ConversionOptions options)
@@ -81,6 +126,18 @@ public class ImageConversionService
             if (!sourceInfo.Exists)
             {
                 return ConversionResult.Failed($"Source file not found: {sourcePath}");
+            }
+
+            // Check if trying to convert TO SVG (not supported)
+            if (options.TargetFormat == ImageFormat.Svg)
+            {
+                return ConversionResult.Failed("Cannot convert to SVG format. SVG is a vector format and cannot be created from raster images.");
+            }
+
+            // Handle SVG source files specially
+            if (IsSvgFile(sourcePath))
+            {
+                return await ConvertSvgAsync(sourcePath, options, stopwatch);
             }
 
             // Load the image
@@ -142,6 +199,137 @@ public class ImageConversionService
             stopwatch.Stop();
             return ConversionResult.Failed($"Conversion failed: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Convert an SVG file to a raster format.
+    /// </summary>
+    private async Task<ConversionResult> ConvertSvgAsync(string sourcePath, ConversionOptions options, Stopwatch stopwatch)
+    {
+        return await Task.Run(async () =>
+        {
+            var sourceInfo = new FileInfo(sourcePath);
+            
+            using var svg = new SKSvg();
+            svg.Load(sourcePath);
+            
+            var picture = svg.Picture;
+            if (picture == null)
+            {
+                return ConversionResult.Failed("Failed to parse SVG file.");
+            }
+
+            var bounds = picture.CullRect;
+            var originalWidth = (int)bounds.Width;
+            var originalHeight = (int)bounds.Height;
+            
+            // Calculate target dimensions based on resize options
+            int targetWidth = originalWidth;
+            int targetHeight = originalHeight;
+            
+            if (options.ResizeMode != ResizeMode.None)
+            {
+                switch (options.ResizeMode)
+                {
+                    case ResizeMode.ExactSize:
+                        targetWidth = options.TargetWidth > 0 ? options.TargetWidth : originalWidth;
+                        targetHeight = options.TargetHeight > 0 ? options.TargetHeight : originalHeight;
+                        break;
+                    case ResizeMode.MaxWidth when options.TargetWidth > 0:
+                        targetWidth = options.TargetWidth;
+                        targetHeight = options.MaintainAspectRatio
+                            ? (int)(originalHeight * ((double)options.TargetWidth / originalWidth))
+                            : originalHeight;
+                        break;
+                    case ResizeMode.MaxHeight when options.TargetHeight > 0:
+                        targetHeight = options.TargetHeight;
+                        targetWidth = options.MaintainAspectRatio
+                            ? (int)(originalWidth * ((double)options.TargetHeight / originalHeight))
+                            : originalWidth;
+                        break;
+                    case ResizeMode.Percentage when options.TargetWidth > 0:
+                        var scale = options.TargetWidth / 100.0;
+                        targetWidth = (int)(originalWidth * scale);
+                        targetHeight = (int)(originalHeight * scale);
+                        break;
+                }
+            }
+
+            // Ensure minimum dimensions
+            targetWidth = Math.Max(1, targetWidth);
+            targetHeight = Math.Max(1, targetHeight);
+
+            // Create bitmap and render SVG
+            using var bitmap = new SKBitmap(targetWidth, targetHeight);
+            using var canvas = new SKCanvas(bitmap);
+            
+            // Fill with white background for formats that don't support transparency
+            if (!options.TargetFormat.SupportsTransparency())
+            {
+                canvas.Clear(SKColors.White);
+            }
+            else
+            {
+                canvas.Clear(SKColors.Transparent);
+            }
+            
+            // Scale to fit
+            var scaleX = targetWidth / bounds.Width;
+            var scaleY = targetHeight / bounds.Height;
+            canvas.Scale(scaleX, scaleY);
+            canvas.Translate(-bounds.Left, -bounds.Top);
+            
+            canvas.DrawPicture(picture);
+
+            // Determine output path
+            var outputPath = GetOutputPath(sourcePath, options);
+
+            // Check if we should overwrite
+            if (File.Exists(outputPath) && !options.OverwriteExisting)
+            {
+                outputPath = GetUniqueFilePath(outputPath);
+            }
+
+            // Ensure output directory exists
+            var outputDir = Path.GetDirectoryName(outputPath);
+            if (!string.IsNullOrEmpty(outputDir) && !Directory.Exists(outputDir))
+            {
+                Directory.CreateDirectory(outputDir);
+            }
+
+            // Convert SKBitmap to ImageSharp Image for encoding
+            using var pixmap = bitmap.PeekPixels();
+            var imageInfo = pixmap.Info;
+            var data = pixmap.GetPixels();
+            
+            // Create ImageSharp image from raw pixel data
+            using var image = SixLabors.ImageSharp.Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Bgra32>(
+                pixmap.GetPixelSpan(), 
+                imageInfo.Width, 
+                imageInfo.Height);
+
+            // Get encoder for target format
+            var encoder = GetEncoder(options);
+
+            // Save the image
+            await image.SaveAsync(outputPath, encoder);
+
+            stopwatch.Stop();
+            var outputInfo = new FileInfo(outputPath);
+
+            return new ConversionResult
+            {
+                Success = true,
+                OutputPath = outputPath,
+                OriginalSizeBytes = sourceInfo.Length,
+                NewSizeBytes = outputInfo.Length,
+                OriginalWidth = originalWidth,
+                OriginalHeight = originalHeight,
+                NewWidth = targetWidth,
+                NewHeight = targetHeight,
+                ConversionTime = stopwatch.Elapsed
+            };
+        });
     }
 
     /// <summary>

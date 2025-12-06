@@ -133,6 +133,9 @@ $manifest = @"
             <desktop5:ItemType Type=".tif">
               <desktop5:Verb Id="ImageConverterConvert" Clsid="B1ACA79B-47E6-4E50-BE81-535E6267C8B7" />
             </desktop5:ItemType>
+            <desktop5:ItemType Type=".svg">
+              <desktop5:Verb Id="ImageConverterConvert" Clsid="B1ACA79B-47E6-4E50-BE81-535E6267C8B7" />
+            </desktop5:ItemType>
           </desktop4:FileExplorerContextMenus>
         </desktop4:Extension>
       </Extensions>

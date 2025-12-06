@@ -35,6 +35,7 @@
                 <ui:Button x:Name="BtnPng" Content="PNG" Margin="4" Width="80" Click="OnFormatClick" Tag="Png" />
                 <ui:Button x:Name="BtnWebp" Content="WebP" Margin="4" Width="80" Click="OnFormatClick" Tag="WebP" />
                 <ui:Button x:Name="BtnGif" Content="GIF" Margin="4" Width="80" Click="OnFormatClick" Tag="Gif" />
+                <ui:Button x:Name="BtnIco" Content="ICO" Margin="4" Width="80" Click="OnFormatClick" Tag="Ico" />
                 <ui:Button x:Name="BtnBmp" Content="BMP" Margin="4" Width="80" Click="OnFormatClick" Tag="Bmp" />
                 <ui:Button x:Name="BtnTiff" Content="TIFF" Margin="4" Width="80" Click="OnFormatClick" Tag="Tiff" />
             </WrapPanel>

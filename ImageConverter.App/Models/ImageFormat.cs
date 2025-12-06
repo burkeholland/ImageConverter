@@ -11,7 +11,8 @@ public enum ImageFormat
     Gif,
     Bmp,
     Tiff,
-    Ico
+    Ico,
+    Svg  // Note: Can only convert FROM SVG, not TO SVG
 }
 
 /// <summary>
@@ -28,6 +29,7 @@ public static class ImageFormatExtensions
         ImageFormat.Bmp => "Bitmap (.bmp)",
         ImageFormat.Tiff => "TIFF (.tiff)",
         ImageFormat.Ico => "Icon (.ico)",
+        ImageFormat.Svg => "SVG (.svg)",
         _ => format.ToString()
     };
 
@@ -40,6 +42,7 @@ public static class ImageFormatExtensions
         ImageFormat.Bmp => ".bmp",
         ImageFormat.Tiff => ".tiff",
         ImageFormat.Ico => ".ico",
+        ImageFormat.Svg => ".svg",
         _ => ".png"
     };
 
@@ -52,6 +55,7 @@ public static class ImageFormatExtensions
         ImageFormat.Bmp => "image/bmp",
         ImageFormat.Tiff => "image/tiff",
         ImageFormat.Ico => "image/x-icon",
+        ImageFormat.Svg => "image/svg+xml",
         _ => "image/png"
     };
 
@@ -68,6 +72,25 @@ public static class ImageFormatExtensions
         ImageFormat.WebP => true,
         ImageFormat.Gif => true,
         ImageFormat.Ico => true,
+        ImageFormat.Svg => true,
         _ => false
     };
+
+    /// <summary>
+    /// Check if the format can be used as a conversion target.
+    /// SVG cannot be a target since it's vector-based.
+    /// </summary>
+    public static bool CanBeConversionTarget(this ImageFormat format) => format switch
+    {
+        ImageFormat.Svg => false,  // Cannot convert TO SVG (vector format)
+        _ => true
+    };
+
+    /// <summary>
+    /// Get all formats that can be used as conversion targets (excludes SVG).
+    /// </summary>
+    public static IEnumerable<ImageFormat> GetConvertibleTargetFormats()
+    {
+        return Enum.GetValues<ImageFormat>().Where(f => f.CanBeConversionTarget());
+    }
 }

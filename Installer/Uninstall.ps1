@@ -33,7 +33,7 @@ if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Adm
 # Remove shell extension
 Write-Host "[1/3] Removing shell context menu entries..." -ForegroundColor Cyan
 
-$imageExtensions = @(".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".tif", ".ico")
+$imageExtensions = @(".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".tif", ".ico", ".svg")
 $registryKeyName = "ImageConverter"
 
 foreach ($ext in $imageExtensions) {

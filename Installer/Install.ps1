@@ -107,19 +107,21 @@ if (-not (Test-Path $exePath)) {
 if (-not $NoShellIntegration) {
     Write-Host "[3/4] Registering shell context menu..." -ForegroundColor Cyan
     
-    $imageExtensions = @(".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".tif", ".ico")
+    $imageExtensions = @(".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".tif", ".ico", ".svg")
     $registryKeyName = "ImageConverter"
     $menuName = "Convert Image"
     
-    # Format options for submenu
+    # Format options for submenu - ordered by popularity
+    # Most common formats first, less common at bottom
+    # Key names are prefixed with numbers to control menu order (Windows sorts alphabetically)
     $formatOptions = @(
-        @{ Name = "JPEG"; Arg = "jpeg" },
-        @{ Name = "PNG"; Arg = "png" },
-        @{ Name = "WebP"; Arg = "webp" },
-        @{ Name = "GIF"; Arg = "gif" },
-        @{ Name = "BMP"; Arg = "bmp" },
-        @{ Name = "TIFF"; Arg = "tiff" },
-        @{ Name = "ICO"; Arg = "ico" }
+        @{ Name = "JPEG"; Arg = "jpeg"; Key = "1_jpeg" },
+        @{ Name = "PNG"; Arg = "png"; Key = "2_png" },
+        @{ Name = "WebP"; Arg = "webp"; Key = "3_webp" },
+        @{ Name = "GIF"; Arg = "gif"; Key = "4_gif" },
+        @{ Name = "ICO"; Arg = "ico"; Key = "5_ico" },
+        @{ Name = "BMP"; Arg = "bmp"; Key = "6_bmp" },
+        @{ Name = "TIFF"; Arg = "tiff"; Key = "7_tiff" }
     )
     
     foreach ($ext in $imageExtensions) {
@@ -143,22 +145,19 @@ if (-not $NoShellIntegration) {
             $shellPath = "$keyPath\shell"
             New-Item -Path $shellPath -Force | Out-Null
             
-            # Add format options
-            $order = 0
+            # Add format options (numbered keys ensure correct order)
             foreach ($format in $formatOptions) {
-                $formatPath = "$shellPath\$($format.Arg)"
+                $formatPath = "$shellPath\$($format.Key)"
                 New-Item -Path $formatPath -Force | Out-Null
                 Set-ItemProperty -Path $formatPath -Name "MUIVerb" -Value "Convert to $($format.Name)"
                 
                 $commandPath = "$formatPath\command"
                 New-Item -Path $commandPath -Force | Out-Null
                 Set-ItemProperty -Path $commandPath -Name "(Default)" -Value "`"$exePath`" --convert `"$($format.Arg)`" `"%1`""
-                
-                $order++
             }
             
-            # Add Custom option with separator
-            $customPath = "$shellPath\custom"
+            # Add Custom option with separator (8_ prefix puts it last)
+            $customPath = "$shellPath\8_custom"
             New-Item -Path $customPath -Force | Out-Null
             Set-ItemProperty -Path $customPath -Name "MUIVerb" -Value "Custom..."
             Set-ItemProperty -Path $customPath -Name "CommandFlags" -Value 0x20 -Type DWord
@@ -194,9 +193,9 @@ if (-not $NoShellIntegration) {
         $shellPath = "$keyPath\shell"
         New-Item -Path $shellPath -Force | Out-Null
         
-        # Add format options
+        # Add format options (use Key for proper ordering)
         foreach ($format in $formatOptions) {
-            $formatPath = "$shellPath\$($format.Arg)"
+            $formatPath = "$shellPath\$($format.Key)"
             New-Item -Path $formatPath -Force | Out-Null
             Set-ItemProperty -Path $formatPath -Name "MUIVerb" -Value "Convert to $($format.Name)"
             
@@ -205,8 +204,8 @@ if (-not $NoShellIntegration) {
             Set-ItemProperty -Path $commandPath -Name "(Default)" -Value "`"$exePath`" --convert `"$($format.Arg)`" `"%1`""
         }
         
-        # Add Custom option with separator
-        $customPath = "$shellPath\custom"
+        # Add Custom option with separator (8_ prefix puts it last)
+        $customPath = "$shellPath\8_custom"
         New-Item -Path $customPath -Force | Out-Null
         Set-ItemProperty -Path $customPath -Name "MUIVerb" -Value "Custom..."
         Set-ItemProperty -Path $customPath -Name "CommandFlags" -Value 0x20 -Type DWord
